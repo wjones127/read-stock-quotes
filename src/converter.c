@@ -8,15 +8,18 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+
 void convert_all(unsigned nlines, char *lines[], quote_t nums[])
 {
-    printf("Number of lines: %d\n", nlines);
+    //printf("Number of lines: %d\n", nlines);
+    
     const char* zero_char = "0";
-    const int zero = (int)zero_char[0];
+    const int zero = (int8_t)zero_char[0];
+    
 
     /*
-    for (unsigned i = 490; i < 500; i++) {
-    printf("%s\n", lines[i]);
+    for (unsigned i = 3275; i < 3280; i++) {
+        printf("%d: %s\n", i, lines[i]);
         
     //    printf("Are these equal? %c, %d, %d \n",
     //lines[i][0], (int)lines[i][0], (int)lines[i][0] - zero);
@@ -24,50 +27,63 @@ void convert_all(unsigned nlines, char *lines[], quote_t nums[])
     }
     */
     
+    
 
     // adjustment constants for different sizes
-    
+
+    /*
     const quote_t fix_4d = 1111 * zero;
     const quote_t fix_3d = 111 * zero;
     const quote_t fix_5d = 11111 * zero;
-    
-    //const quote_t fixes[6] = { 0, 0, 0, 111 * zero, 1111 * zero, 11111 * zero };
-
-    /*
-      Handling the first 3 digits using vectors
-     */
-    /*
-    quote_t *digit1 = calloc(nlines, sizeof(quote_t));
-    quote_t *digit2 = calloc(nlines, sizeof(quote_t));
-    quote_t *digit3 = calloc(nlines, sizeof(quote_t));
-
-    for (i = 0; i < nlines; i++) {
-        digit1[i] = (int)lines[i][0];
-        digit2[i] = (int)lines[i][1];
-        digit3[i] = (int)lines[i][3];
-    }
-
-    nums =
     */
     
+    const quote_t fixes[6] = {111 * zero, 1111 * zero, 11111 * zero };
+
     
+    // Create arrays of digits
+    uint8_t digit1[nlines];
+    uint8_t digit2[nlines];
+    uint8_t digit3[nlines];
 
     unsigned i;
-
-    // Start by handling first three digits
-    for (i = 1; i < nlines; i++) {
-        nums[i] = ((int)lines[i][0] * 100) +
-            ((int)lines[i][1] * 10) + (int)lines[i][2];
+    
+    for (i = 0; i < nlines; i++) {
+        digit1[i] = (uint8_t)lines[i][0];
+        digit2[i] = (uint8_t)lines[i][1];
+        digit3[i] = (uint8_t)lines[i][2];
     }
 
+    // Start by handling first three digits
+    for (i = 0; i < nlines; i++) {
+
+        uint8_t *d1 = __builtin_assume_aligned(digit1, sizeof(quote_t));
+        uint8_t *d2 = __builtin_assume_aligned(digit2, sizeof(quote_t));
+        uint8_t *d3 = __builtin_assume_aligned(digit3, sizeof(quote_t));
+        
+        nums[i] = (quote_t)(100 * d1[i] + 10 * d2[i] + d3[i]);
+        /*        nums[i] = ((int)lines[i][0] * 100) +
+                  ((int)lines[i][1] * 10) + (int)lines[i][2]; */
+    }
+
+    //    printf("---\n");
+    int pow_ten[3] = {1, 10, 100};
+
     // Then do the rest
-    for (i = 1; i < nlines; i++) {
+    for (i = 0; i < nlines; i++) {
         //nums[i] = atoi(lines[i]);
         int j;
 
-        bool has_fourth_digit = lines[i][3] != 0;
-        bool has_fifth_digit = has_fourth_digit && lines[i][4] != 0;
-        
+        int has_fourth_digit = lines[i][3] != 0;
+        int has_fifth_digit = has_fourth_digit && lines[i][4] != 0;
+
+        j = has_fourth_digit + has_fifth_digit;
+
+
+        nums[i] = (nums[i] * pow_ten[j]) +
+            (has_fourth_digit * pow_ten[j-1] * (int)lines[i][3]) +
+            (has_fifth_digit * (int)lines[i][4]) -
+            fixes[j];
+        /*
         if (has_fourth_digit && !has_fifth_digit) {
             nums[i] = (nums[i] * 10) + (int)lines[i][3];
             j = 4;
@@ -80,21 +96,17 @@ void convert_all(unsigned nlines, char *lines[], quote_t nums[])
         else {
             j = 3;
         }
-                
+        */
+        /*
         switch (j) {
         case 4: nums[i] = nums[i] - fix_4d; break;
         case 3: nums[i] = nums[i] - fix_3d; break;
         case 5: nums[i] = nums[i] - fix_5d; break;
         }
-
-        //printf("%d\n", nums[i]);
+        */
+        //printf("%d: %d, %d\n", i, nums[i], j);
         
         //printf("%"PRIu32"\n", nums[i]);
     }
 
-    /* figure out which are going wrong */
-    for (i = 1; i < nlines; i++) {
-        if ((uint32_t)atoi(lines[i]) == nums[i])
-            printf("%s versus %d\n", lines[i], nums[i]);
-    }
 }

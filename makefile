@@ -5,3 +5,6 @@ build/test: src/converter.c
 
 test: build/test
 	build/test quotes.txt 1000
+
+build/test.h: src/converter.c
+	gcc-5 $(CFLAGS) -S -fverbose-asm -o build/test.h src/converter.c
