@@ -5,6 +5,7 @@
 #include "converter.h"
 
 #include <stdlib.h>
+#include <stdbool.h>
 #include <stdio.h>
 
 void convert_all(unsigned nlines, char *lines[], quote_t nums[])
@@ -14,14 +15,15 @@ void convert_all(unsigned nlines, char *lines[], quote_t nums[])
     const int zero = (int)zero_char[0];
 
     /*
-    for (unsigned i = 0; i < 10; i++) {
+    for (unsigned i = 490; i < 500; i++) {
     printf("%s\n", lines[i]);
         
-    printf("Are these equal? %c, %d, %d \n",
-    lines[i][0], (int)lines[i][0], (int)lines[i][0] - zero);
+    //    printf("Are these equal? %c, %d, %d \n",
+    //lines[i][0], (int)lines[i][0], (int)lines[i][0] - zero);
 
     }
     */
+    
 
     // adjustment constants for different sizes
     
@@ -30,56 +32,69 @@ void convert_all(unsigned nlines, char *lines[], quote_t nums[])
     const quote_t fix_5d = 11111 * zero;
     
     //const quote_t fixes[6] = { 0, 0, 0, 111 * zero, 1111 * zero, 11111 * zero };
+
+    /*
+      Handling the first 3 digits using vectors
+     */
+    /*
+    quote_t *digit1 = calloc(nlines, sizeof(quote_t));
+    quote_t *digit2 = calloc(nlines, sizeof(quote_t));
+    quote_t *digit3 = calloc(nlines, sizeof(quote_t));
+
+    for (i = 0; i < nlines; i++) {
+        digit1[i] = (int)lines[i][0];
+        digit2[i] = (int)lines[i][1];
+        digit3[i] = (int)lines[i][3];
+    }
+
+    nums =
+    */
+    
     
 
-    // Tried to use OpenMP to do the conversion in parallel,
-    // but it actually was slower.
     unsigned i;
-    //#pragma omp parallel for private(i)
-    for (i = 0; i < nlines; i++) {
+
+    // Start by handling first three digits
+    for (i = 1; i < nlines; i++) {
+        nums[i] = ((int)lines[i][0] * 100) +
+            ((int)lines[i][1] * 10) + (int)lines[i][2];
+    }
+
+    // Then do the rest
+    for (i = 1; i < nlines; i++) {
         //nums[i] = atoi(lines[i]);
-        quote_t sum = 0;
-        unsigned j;
+        int j;
 
-        /*
-          for (j = 0; lines[i][j] != 0; j++) {
-          sum = (10 * sum) + ((int)lines[i][j]);
-          }
-        */
-        // Handle first three digits
-        sum = (int)lines[i][0];
-        sum = (10 * sum) + ((int)lines[i][1]);
-        sum = (10 * sum) + ((int)lines[i][2]);
-        if (lines[i][3] != 0)
-            {
-    sum = (10 * sum) + ((int)lines[i][3]);
-    j = 4;
-    if (lines[i][4] != 0) {
-    sum = (10 * sum) + ((int)lines[i][4]);
-    j = 5;
-}
-}
-        else {
-    j = 3;
-}
+        bool has_fourth_digit = lines[i][3] != 0;
+        bool has_fifth_digit = has_fourth_digit && lines[i][4] != 0;
         
-
-        //printf("stopped at j = %d\n", j);
-        // If it's a 4-digit number (most common case)
-        
-        switch (j) {
-        case 4: sum = sum - fix_4d; break;
-        case 3: sum = sum - fix_3d; break;
-        case 5: sum = sum - fix_5d; break;
+        if (has_fourth_digit && !has_fifth_digit) {
+            nums[i] = (nums[i] * 10) + (int)lines[i][3];
+            j = 4;
         }
+        else if (has_fifth_digit) {
+            nums[i] = (nums[i] * 100) + ((int)lines[i][3] * 10) +
+                (int)lines[i][4];
+            j = 5;
+        }
+        else {
+            j = 3;
+        }
+                
+        switch (j) {
+        case 4: nums[i] = nums[i] - fix_4d; break;
+        case 3: nums[i] = nums[i] - fix_3d; break;
+        case 5: nums[i] = nums[i] - fix_5d; break;
+        }
+
+        //printf("%d\n", nums[i]);
         
-        //sum = sum - fixes[j];
-        
-        /*        if (j == 4) sum = sum - fix_4d;
-        else if (j == 3) sum = sum - fix_3d;
-        else sum = sum - fix_5d;*/
-        
-        //printf("%"PRIu32"\n", sum);
-        nums[i] = sum;
+        //printf("%"PRIu32"\n", nums[i]);
+    }
+
+    /* figure out which are going wrong */
+    for (i = 1; i < nlines; i++) {
+        if ((uint32_t)atoi(lines[i]) == nums[i])
+            printf("%s versus %d\n", lines[i], nums[i]);
     }
 }
