@@ -15,17 +15,18 @@ void convert_all(unsigned nlines, char *lines[], quote_t nums[])
 
     /*
     for (unsigned i = 0; i < 10; i++) {
-        printf("%s\n", lines[i]);
+    printf("%s\n", lines[i]);
         
-        printf("Are these equal? %c, %d, %d \n",
-               lines[i][0], (int)lines[i][0], (int)lines[i][0] - zero);
+    printf("Are these equal? %c, %d, %d \n",
+    lines[i][0], (int)lines[i][0], (int)lines[i][0] - zero);
 
-               }*/
+    }
+    */
 
     // adjustment constants for different sizes
-    const int fix_4d = 1111 * zero;
-    const int fix_3d = 111 * zero;
-    const int fix_5d = 11111 * zero;
+    const quote_t fix_4d = 1111 * zero;
+    const quote_t fix_3d = 111 * zero;
+    const quote_t fix_5d = 11111 * zero;
 
     // Tried to use OpenMP to do the conversion in parallel,
     // but it actually was slower.
@@ -35,9 +36,28 @@ void convert_all(unsigned nlines, char *lines[], quote_t nums[])
         //nums[i] = atoi(lines[i]);
         quote_t sum = 0;
         unsigned j;
-        for (j = 0; lines[i][j] != 0; j++) {
-            sum = (10 * sum) + ((int)lines[i][j]);
+
+        /*
+          for (j = 0; lines[i][j] != 0; j++) {
+          sum = (10 * sum) + ((int)lines[i][j]);
+          }
+        */
+        // Handle first three digits
+        sum = (int)lines[i][0];
+        sum = (10 * sum) + ((int)lines[i][1]);
+        sum = (10 * sum) + ((int)lines[i][2]);
+        if (lines[i][3] != 0) {
+    sum = (10 * sum) + ((int)lines[i][3]);
+            j = 4;
+            if (lines[i][4] != 0) {
+    sum = (10 * sum) + ((int)lines[i][4]);
+                j = 5;
+            }
         }
+        else {
+            j = 3;
+        }
+        
 
         //printf("stopped at j = %d\n", j);
         // If it's a 4-digit number (most common case)
