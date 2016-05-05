@@ -1,4 +1,4 @@
-CFLAGS = -O3 -std=c99 -march=native -Werror -Wall -Wextra -pedantic -fopenmp
+CFLAGS = -O3 -std=c99 -march=native -Werror -Wall -Wextra -pedantic -fopenmp -g
 
 build/test: src/converter.c
 	gcc-5 $(CFLAGS) -o build/test src/converter.c src/driver.c
