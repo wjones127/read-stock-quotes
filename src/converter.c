@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-quote_t add_first_three(char *lines[], uint32_t i)
+static quote_t add_first_three(char *lines[], uint32_t i)
 {
     return (100 * (int)lines[i][0]) + (10 * (int)lines[i][1]) + (int)lines[i][2];
 }
@@ -47,7 +47,6 @@ void convert_all(unsigned nlines, char *lines[], quote_t nums[])
     for (i = 0; i < nlines; i++) {
         //nums[i] = atoi(lines[i]);
         quote_t sum = 0;
-        unsigned j;                                        
 
         // Handle first three digits
         sum = add_first_three(lines, i);
@@ -56,23 +55,19 @@ void convert_all(unsigned nlines, char *lines[], quote_t nums[])
         if (__builtin_expect((lines[i][3] != 0), 1))
             {
                 sum = (10 * sum) + (int)lines[i][3];
-                j = 4;
+                
                 if (__builtin_expect((lines[i][4] != 0), 0)) {
                     sum = (10 * sum) + (int)lines[i][4];
-                    j = 5;
+                    sum = sum - fix_5d;
+                }
+                else {
+                    sum = sum - fix_4d;
                 }
             }
         else {
-            j = 3;
+            sum = sum - fix_3d;
         }
 
-        // Subtract the zero representation
-        switch (j) {
-        case 3: sum = sum - fix_3d; break;
-        case 4: sum = sum - fix_4d; break;
-        case 5: sum = sum - fix_5d; break;
-        }
-        
         //printf("%"PRIu32"\n", sum);
         nums[i] = sum;
     }
