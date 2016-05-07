@@ -7,6 +7,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+quote_t add_first_three(char *lines[], uint32_t i)
+{
+    return (100 * (int)lines[i][0]) + (10 * (int)lines[i][1]) + (int)lines[i][2];
+}
+
 void convert_all(unsigned nlines, char *lines[], quote_t nums[])
 {
     //printf("Number of lines: %d\n", nlines);
@@ -40,12 +45,12 @@ void convert_all(unsigned nlines, char *lines[], quote_t nums[])
     unsigned i;
 
     for (i = 0; i < nlines; i++) {
-        nums[i] = atoi(lines[i]);
+        //nums[i] = atoi(lines[i]);
         quote_t sum = 0;
         unsigned j;                                        
 
         // Handle first three digits
-        sum = (100 * (int)lines[i][0]) + (10 * (int)lines[i][1]) + (int)lines[i][2];
+        sum = add_first_three(lines, i);
         
         // Handle last two digits        
         if (__builtin_expect((lines[i][3] != 0), 1))
