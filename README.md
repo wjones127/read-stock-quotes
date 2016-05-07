@@ -6,6 +6,8 @@ Here, we attempt to optimize a function that takes an array of character strings
 (that are numbers) and converts them to an array of numbers. The function we
 are optimizing is given a pointer to the array of numbers.
 
+![](./runtime_plot.png)
+
 ## Data Observations
 
 Any patterns in the data were fair game, so we looked at the data. All the
