@@ -2,17 +2,12 @@
 Work done by Will Jones.
 
 This is from an assignment in Advanced Topics in Computer Systems at Reed College.
-Here, we attempt to optimize a function that takes an array of character strings
+Here, I optimized a function that takes an array of character strings
 (that are numbers) and converts them to an array of numbers. The function we
-are optimizing is given a pointer to the array of numbers.
+are optimizing is given a pointer to the array of numbers, in which it saves the result.
+(The functions interface is described in `src/converter.h`.)
 
 ![](./runtime_plot.png)
-
-## Data Observations
-
-Any patterns in the data were fair game, so we looked at the data. All the
-numbers are either 3, 4, or 5 digit numbers, with the vast majority being
-4 digit numbers.
 
 ## Optimizations
 
@@ -23,14 +18,18 @@ loop was simply
 nums[i] = atoi(lines[i]);
 ```
 
-I needed another way to convert the characters to integers. The approach I
-implemented took advantage of [the fact that the integer representation of
-any numeric character is greater than zero by exactly that characters value.
-](http://stackoverflow.com/questions/781668/char-to-int-conversion-in-c)
+Two key observations enabled my optimizations:
+
+1.  The integer representation of any numeric character is greater 
+    than zero's representation by exactly that characters value.
+([See this Stack Overflow question](http://stackoverflow.com/questions/781668/char-to-int-conversion-in-c))
 For example, when the string `"5"` is converted to an integer, that integer is
 5 greater than the representation of `"0"`.
+2. All of the integers were either 3, 4, or 5 digits long, with the vast majority being
+   4 digits. (In this assignment, any patterns we saw in the data were fair game.)
 
-So we extract the `j`th digit from the `i`th number string with
+Observation 1 gave me the main strategy for converting characters into numbers
+extract the `j`th digit from the `i`th number string with
 ```c
 const char* zero_char = "0";
 const int zero = (int)zero_char[0];
@@ -38,28 +37,25 @@ const int zero = (int)zero_char[0];
 (int)lines[i][j] - zero
 ```
 
-This gave me a huge performance boost. The next big performance improvement
-was delaying the subtracting of the zero until the end. Instead of subtracting
-the integer representation of `"0"` from each digit, I could subtract 111 times
-(or 1,111 or 11,111 times, depending on the size of the number) that integer
-representation at the end. Precomputing these multiples of that integer
-representation before the main loop and then subtracting them at the end of
-the digit loop gave another boost in performance.
+Digits were added together aftering being multiplied by the appropriate power of ten.
+(This should be pretty quick, because the compiler will rewrite multiplication by ten
+as the sum (or difference) of two bitshifts, e.g. `10 * x = (x << 3) + (x << 2)`.
 
-I also tried making the loop run in parallel. There are no dependencies between
-the different iterations of the loop, so it should lend itself well to being
-run in multiple threads in parallel. I attempted to use OpenMP, which required
-me to switch compilers from `clang`, which is the default in Mac OS, to `gcc-5`.
-This gave me a performance boost, but it wasn't because of the multithreading;
-having multiple threads slowed it down! It seems that the overhead of setting
-up the separate processes is too great for this optimization, but at least I
-discovered a more efficient compiler.
+In additive, a little bit of speed is gained by deferring the subtraction of the zero
+representation until the end. We can do this by subtracting `111 * zero` or (`1111` or `11111` times,
+depending on the number of digits) at the end.
 
-The final optimization I made was to unroll the loop for the digits. This
-almost halved the run time. In some situations, the compiler will unroll the
-loop automatically, but in this case it couldn't tell how much to unroll it
-because the length was dependent on the length of the string. Because I knew
-the strings were either 3, 4 or 5 digits long, I unrolled the loop to 3 iterations
-and added if statements to check whether it should look at the next digits. It
-seems either the compiler had a much easier time optimizing that or the processor
-was able to prefetch more efficiently in this situation.
+In a situation where I didn't know the length of the numbers, I would have done a for
+loop iterating over all the characters of the string. However, there were only three
+possible lengths here, so I could unroll the first three iterations of the loop and
+put the last two in if statements. Lastly, because I knew most of the numbers were
+4 digit numbers, I added a `__builtin_expect` to the if statement to help the
+compiler predict the branches.
+
+There were a couple things I tried that didn't work out:
+
+- I tried parallelizing the code with OpenMP. Unfortunately the overhead of multiple threads
+  is too large for this situation.
+- I also tried using vector intrinsics; i.e. packing the integer representations into `_m128i` vectors
+  and doing the arithmetic with the vectors. (The code for this is in the `vector` branch.) Again,
+  the overhead cost of packing the integers into vectors was too high.
